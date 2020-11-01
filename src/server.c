@@ -457,6 +457,22 @@ int main(int argc, char **argv) {
   info.ws_ping_pong_interval = 5;
 #endif
 
+#if LWS_LIBRARY_VERSION_NUMBER >= 4000000
+  static const uint32_t backoff_ms[] = { 1000, 2000, 3000, 4000, 5000 };
+  static const lws_retry_bo_t retry = {
+	.retry_ms_table			= backoff_ms,
+	.retry_ms_table_count		= LWS_ARRAY_SIZE(backoff_ms),
+	.conceal_count			= LWS_ARRAY_SIZE(backoff_ms),
+
+        /* Just a high value is used, so the connection is not closed during the test */
+	.secs_since_valid_ping		= 20, /* force PINGs after secs idle */
+	.secs_since_valid_hangup	= 30, /* hangup after secs idle */
+
+	.jitter_percent			= 0,
+  };
+  info.retry_and_idle_policy = &retry;
+#endif
+
   if (strlen(iface) > 0) {
     info.iface = iface;
     if (endswith(info.iface, ".sock") || endswith(info.iface, ".socket")) {
